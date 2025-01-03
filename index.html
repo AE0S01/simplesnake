@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <script>
+// Simple Snake game in JavaScript
+
+// Create the canvas
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 600;
+canvas.height = 600;
+document.body.appendChild(canvas);
+
+let delay = 100; // Snake speed in milliseconds
+let score = 0;
+let highScore = 0;
+
+// Snake head
+const head = {
+    x: 300,
+    y: 300,
+    direction: 'stop',
+    size: 20,
+    color: '#00FF00'
+};
+
+// Food
+const food = {
+    x: 300,
+    y: 200,
+    size: 20,
+    color: 'red'
+};
+
+// Snake segments
+let segments = [];
+
+// Movement functions
+function goUp() {
+    if (head.direction !== 'down') {
+        head.direction = 'up';
+    }
+}
+
+function goDown() {
+    if (head.direction !== 'up') {
+        head.direction = 'down';
+    }
+}
+
+function goLeft() {
+    if (head.direction !== 'right') {
+        head.direction = 'left';
+    }
+}
+
+function goRight() {
+    if (head.direction !== 'left') {
+        head.direction = 'right';
+    }
+}
+
+// Keyboard controls
+document.addEventListener('keydown', (e) => {
+    switch(e.key) {
+        case 'w': goUp(); break;
+        case 's': goDown(); break;
+        case 'a': goLeft(); break;
+        case 'd': goRight(); break;
+    }
+});
+
+function move() {
+    switch(head.direction) {
+        case 'up':
+            head.y -= 20;
+            break;
+        case 'down':
+            head.y += 20;
+            break;
+        case 'left':
+            head.x -= 20;
+            break;
+        case 'right':
+            head.x += 20;
+            break;
+    }
+}
+
+function resetGame() {
+    head.x = 300;
+    head.y = 300;
+    head.direction = 'stop';
+    segments = [];
+    score = 0;
+    delay = 100;
+}
+
+function drawScore() {
+    ctx.fillStyle = 'black';
+    ctx.font = '24px Courier';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Score: ${score}  High Score: ${highScore}`, canvas.width / 2, 30);
+}
+
+function checkCollision() {
+    // Wall collision
+    if (head.x < 0 || head.x > canvas.width - 20 || 
+        head.y < 0 || head.y > canvas.height - 20) {
+        resetGame();
+    }
+
+    // Food collision
+    if (Math.abs(head.x - food.x) < 20 && Math.abs(head.y - food.y) < 20) {
+        food.x = Math.floor(Math.random() * (canvas.width - 40) / 20) * 20;
+        food.y = Math.floor(Math.random() * (canvas.height - 40) / 20) * 20;
+
+        let newSegment = {};
+        if (segments.length > 0) {
+            const lastSegment = segments[segments.length - 1];
+            newSegment = { x: lastSegment.x, y: lastSegment.y };
+        } else {
+            newSegment = { x: head.x, y: head.y };
+        }
+        segments.push(newSegment);
+
+        score += 10;
+        if (score > highScore) {
+            highScore = score;
+        }
+        delay *= 0.999;
+    }
+
+    // Self collision
+    segments.forEach((segment, index) => {
+        if (index > 0 && Math.abs(head.x - segment.x) < 20 && Math.abs(head.y - segment.y) < 20) {
+            resetGame();
+        }
+    });
+}
+
+function updateSegments() {
+    for (let i = segments.length - 1; i > 0; i--) {
+        segments[i].x = segments[i - 1].x;
+        segments[i].y = segments[i - 1].y;
+    }
+    if (segments.length > 0) {
+        segments[0].x = head.x;
+        segments[0].y = head.y;
+    }
+}
+
+function draw() {
+    // Clear canvas
+    ctx.fillStyle = 'green';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw head
+    ctx.fillStyle = head.color;
+    ctx.fillRect(head.x, head.y, head.size, head.size);
+
+    // Draw segments
+    segments.forEach(segment => {
+        ctx.fillStyle = '#00FF00';
+        ctx.fillRect(segment.x, segment.y, head.size, head.size);
+    });
+
+    // Draw food
+    ctx.fillStyle = food.color;
+    ctx.beginPath();
+    ctx.arc(food.x + 10, food.y + 10, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw score
+    drawScore();
+}
+
+function gameLoop() {
+    if (head.direction !== 'stop') {
+        move();
+        checkCollision();
+        updateSegments();
+    }
+    draw();
+    setTimeout(gameLoop, delay);
+}
+
+// Start the game
+gameLoop();
+
+    </script>
+</body>
+</html>
